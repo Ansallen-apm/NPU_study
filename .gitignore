@@ -1,0 +1,34 @@
+# Build artifacts
+*.o
+*.a
+*.so
+*.dylib
+*.exe
+test_smmu
+example_advanced
+test_smmu_tlm
+
+# CMake
+build/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile.cmake
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Debugging
+*.dSYM/
+core
+vgcore.*
+
+# Documentation
+*.pdf
+*.aux
+*.log
+*.out
