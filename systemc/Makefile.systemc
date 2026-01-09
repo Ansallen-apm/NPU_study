@@ -1,0 +1,80 @@
+# Makefile for SMMU with SystemC TLM Support
+# 需要安裝 SystemC 庫
+
+# ============================================================================
+# 編譯器和標誌
+# ============================================================================
+
+CXX = g++
+CXXFLAGS = -std=c++17 -Wall -Wextra -O2 -g -I../include
+
+# SystemC 路徑（根據實際安裝路徑調整）
+# 常見路徑：/usr/local/systemc-2.3.3 或 /opt/systemc
+SYSTEMC_HOME ?= /usr/local/systemc-2.3.3
+
+# SystemC 包含路徑和庫路徑
+SYSTEMC_INC = -I$(SYSTEMC_HOME)/include
+SYSTEMC_LIB = -L$(SYSTEMC_HOME)/lib-linux64 -lsystemc
+
+# 完整的編譯標誌
+CXXFLAGS_SC = $(CXXFLAGS) $(SYSTEMC_INC)
+LDFLAGS_SC = $(SYSTEMC_LIB) -Wl,-rpath,$(SYSTEMC_HOME)/lib-linux64
+
+# ============================================================================
+# 源文件
+# ============================================================================
+
+SRC_DIR = ../src
+OBJ_DIR = ../obj
+BIN_DIR = ../bin
+
+# SMMU 核心庫源文件 (use path relative to Makefile location)
+LIB_SOURCES = $(SRC_DIR)/tlb.cpp $(SRC_DIR)/page_table.cpp $(SRC_DIR)/smmu.cpp $(SRC_DIR)/smmu_registers.cpp
+LIB_OBJECTS = $(LIB_SOURCES:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
+
+# 可執行文件
+TARGET_TLM = $(BIN_DIR)/test_smmu_tlm
+
+# ============================================================================
+# 目標
+# ============================================================================
+
+# 默認目標
+systemc: directories $(TARGET_TLM)
+
+directories:
+	@mkdir -p $(OBJ_DIR) $(BIN_DIR)
+
+# SystemC TLM 目標
+$(TARGET_TLM): $(OBJ_DIR)/test_smmu_tlm.o $(LIB_OBJECTS)
+	$(CXX) $(CXXFLAGS_SC) -o $@ $^ $(LDFLAGS_SC)
+
+# 編譯 SystemC 測試對象文件
+$(OBJ_DIR)/test_smmu_tlm.o: test_smmu_tlm.cpp
+	$(CXX) $(CXXFLAGS_SC) -c $< -o $@
+
+# 編譯核心庫對象文件 (Explicit rules to ensure using core sources)
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+# ============================================================================
+# 清理
+# ============================================================================
+
+clean:
+	rm -f $(OBJ_DIR)/test_smmu_tlm.o
+	rm -f $(TARGET_TLM)
+
+# ============================================================================
+# 運行測試
+# ============================================================================
+
+# 運行 SystemC TLM 測試
+test-tlm: $(TARGET_TLM)
+	./$(TARGET_TLM)
+
+# ============================================================================
+# Phony 目標
+# ============================================================================
+
+.PHONY: systemc clean test-tlm directories

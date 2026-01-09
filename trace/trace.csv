@@ -1,0 +1,35 @@
+# SMMU Trace File Example
+# Format: COMMAND, ARG1, ARG2, ...
+
+# 1. Configure Stream Table
+# STREAM, <StreamID>, <ASID>
+# Maps a StreamID (Device) to an Address Space ID (Process)
+STREAM, 0, 1
+STREAM, 1, 2
+
+# 2. Map Memory (Setup Page Tables)
+# MAP, <ASID>, <VirtualAddress>, <PhysicalAddress>, [Permissions]
+# Permissions: RW (Read/Write, default) or RO (Read Only)
+MAP, 1, 0x1000, 0x200000, RW
+MAP, 1, 0x2000, 0x201000, RO
+
+MAP, 2, 0x5000, 0x300000, RW
+
+# 3. Perform Accesses
+# ACCESS, <StreamID>, <VirtualAddress>, [W/R]
+# Perform memory access and check translation
+
+# Should succeed (Mapped to 0x200000)
+ACCESS, 0, 0x1000
+
+# Should succeed (Mapped to 0x201000)
+ACCESS, 0, 0x2000
+
+# Should fail (Not mapped)
+ACCESS, 0, 0x3000
+
+# Should succeed (Mapped to 0x300000) for Stream 1
+ACCESS, 1, 0x5000
+
+# Should fail (Wrong StreamID for this VA)
+ACCESS, 0, 0x5000
