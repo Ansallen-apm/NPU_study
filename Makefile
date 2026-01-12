@@ -1,37 +1,52 @@
 # Makefile for SMMU Functional Model
 
 CXX = g++
-CXXFLAGS = -std=c++17 -Wall -Wextra -O2 -g
+CXXFLAGS = -std=c++17 -Wall -Wextra -O2 -g -Iinclude
 LDFLAGS = 
 
-# Library source files
-LIB_SOURCES = tlb.cpp page_table.cpp smmu.cpp smmu_registers.cpp
-LIB_OBJECTS = $(LIB_SOURCES:.cpp=.o)
+# Directories
+SRC_DIR = src
+INC_DIR = include
+TEST_DIR = tests
+OBJ_DIR = obj
+BIN_DIR = bin
 
-# Headers
-HEADERS = smmu_types.h tlb.h page_table.h smmu.h smmu_registers.h
+# Library source files
+LIB_SOURCES = $(wildcard $(SRC_DIR)/*.cpp)
+LIB_OBJECTS = $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(LIB_SOURCES))
 
 # Executables
-TARGET_TEST = test_smmu
-TARGET_EXAMPLE = example_advanced
+TARGET_TEST = $(BIN_DIR)/test_smmu
+TARGET_EXAMPLE = $(BIN_DIR)/example_advanced
 
 # Default target
-all: $(TARGET_TEST) $(TARGET_EXAMPLE)
+all: directories $(TARGET_TEST) $(TARGET_EXAMPLE)
+
+# Create directories
+directories:
+	@mkdir -p $(OBJ_DIR) $(BIN_DIR)
 
 # Link executables
-$(TARGET_TEST): test_smmu.o $(LIB_OBJECTS)
+$(TARGET_TEST): $(OBJ_DIR)/test_smmu.o $(LIB_OBJECTS)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
-$(TARGET_EXAMPLE): example_advanced.o $(LIB_OBJECTS)
+$(TARGET_EXAMPLE): $(OBJ_DIR)/example_advanced.o $(LIB_OBJECTS)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
-# Compile
-%.o: %.cpp $(HEADERS)
+# Compile Library Sources
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+# Compile Test Sources
+$(OBJ_DIR)/test_smmu.o: $(TEST_DIR)/test_smmu.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(OBJ_DIR)/example_advanced.o: $(TEST_DIR)/example_advanced.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 # Clean
 clean:
-	rm -f $(LIB_OBJECTS) test_smmu.o example_advanced.o $(TARGET_TEST) $(TARGET_EXAMPLE)
+	rm -rf $(OBJ_DIR) $(BIN_DIR)
 
 # Run tests
 test: $(TARGET_TEST)
@@ -42,12 +57,4 @@ example: $(TARGET_EXAMPLE)
 	./$(TARGET_EXAMPLE)
 
 # Phony targets
-.PHONY: all clean test example
-
-# Dependencies
-tlb.o: tlb.cpp tlb.h smmu_types.h
-page_table.o: page_table.cpp page_table.h smmu_types.h
-smmu.o: smmu.cpp smmu.h smmu_types.h tlb.h page_table.h
-smmu_registers.o: smmu_registers.cpp smmu_registers.h
-test_smmu.o: test_smmu.cpp smmu.h smmu_registers.h smmu_types.h tlb.h page_table.h
-example_advanced.o: example_advanced.cpp smmu.h smmu_registers.h smmu_types.h tlb.h page_table.h
+.PHONY: all clean test example directories

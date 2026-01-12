@@ -6,6 +6,13 @@ echo "║   SMMU Compilation Test                ║"
 echo "╚════════════════════════════════════════╝"
 echo ""
 
+# Get script directory
+SCRIPT_DIR=$(dirname "$0")
+ROOT_DIR="$SCRIPT_DIR/.."
+
+# Move to root
+cd "$ROOT_DIR" || exit 1
+
 # 測試基本編譯（不需要 SystemC）
 echo "Testing basic compilation (no SystemC)..."
 make clean > /dev/null 2>&1
@@ -19,7 +26,7 @@ fi
 # 運行基本測試
 echo ""
 echo "Running basic tests..."
-if ./test_smmu > /dev/null 2>&1; then
+if ./bin/test_smmu > /dev/null 2>&1; then
     echo "✅ Basic tests passed"
 else
     echo "❌ Basic tests failed"
@@ -42,15 +49,15 @@ else
         # 測試 SystemC 編譯
         echo ""
         echo "Testing SystemC TLM compilation..."
+        # Navigate to systemc folder to run its makefile, assuming it relies on relative paths now
+        cd systemc || exit 1
         if make -f Makefile.systemc systemc > /dev/null 2>&1; then
             echo "✅ SystemC TLM compilation successful"
-            
-            # 注意：不運行 SystemC 測試，因為需要完整的 SystemC 環境
-            echo "   (SystemC test execution requires full SystemC environment)"
         else
             echo "❌ SystemC TLM compilation failed"
             echo "   Check SystemC installation and SYSTEMC_HOME path"
         fi
+        cd ..
     else
         echo "❌ SystemC not found at $SYSTEMC_HOME"
         echo "   Check SYSTEMC_HOME path"
